@@ -1,91 +1,85 @@
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const scoreElement = document.getElementById('score');
-
-    let circles = []
-    let nextId = 0
-    let score = 0
-
-    function startGame(){
-        setInterval(() =>{
-            addCircle()
-        }, 1000);
-
-        requestAnimationFrame(updateCanvas);
+    const clicksElement = document.getElementById('clicks');
+    const startButton = document.getElementById('startButton');
+    let circles = [];
+    let nextId = 0;
+    let clicks = 0;
+    let testStarted = false;
+    let testFinished = false;
+    let startTime;
+  
+    function startGame() {
+      if (!testStarted) {
+        testStarted = true;
+        startButton.disabled = true;
+        clicks = 0;
+        clicksElement.textContent = clicks;
+        circles = [];
+        startButton.textContent = 'Test in progress...';
+        setTimeout(finishTest, 10000); // Test duration: 10 seconds
+        addCircle();
+      }
     }
-
-    function addCircle(){
+  
+    function finishTest() {
+      testFinished = true;
+      startButton.disabled = false;
+      startButton.textContent = 'Start Test';
+      alert(`Test finished! Clicks: ${clicks}`);
+      testStarted = false;
+      testFinished = false;
+    }
+  
+    function addCircle() {
+      if (!testFinished) {
         const radius = 25;
         const x = Math.random() * (canvas.width - 2 * radius) + radius;
         const y = Math.random() * (canvas.height - 2 * radius) + radius;
-        const startTime = performance.now()
-        const newCircle= {
-            id : nextId++,
-            x,
-            y,
-            radius,
-            timeoutId : null,
-            startTime
-        }
-
-        newCircle.timeoutId = setTimeout(() =>{
-            removeCirle(newCircle.id)
-        },3000)
-
+        const newCircle = { id: nextId++, x, y, radius };
+  
         circles.push(newCircle);
+        drawCircle(newCircle);
+      }
     }
-
-
-    function removeCirle(id){
-        const cirleIndex = circles.findIndex(circle => circle.id === id);
-
-        if(cirleIndex !== -1){
-            clearTimeout(circles[cirleIndex].timeoutId);
-            circles.splice(cirleIndex, 1)
-        }
-    }
-
+  
     canvas.addEventListener('click', (event) => {
+      if (testStarted && !testFinished) {
         const rect = canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
-
-        for(const circle of circles){
-            const distance = Math.sqrt((circle.x - x) ** 2 + (circle.y - y) ** 2);
-            if (distance < circle.radius) {
-                removeCirle(circle.id);
-                score++;
-                scoreElement.textContent = score;
-                break;
-            }
+  
+        for (let i = 0; i < circles.length; i++) {
+          const circle = circles[i];
+          const distance = Math.sqrt((circle.x - x) ** 2 + (circle.y - y) ** 2);
+          if (distance < circle.radius) {
+            circles.splice(i, 1);
+            clicks++;
+            clicksElement.textContent = clicks;
+            redrawCanvas();
+            addCircle();
+            break;
+          }
         }
-    })
-
-    function updateCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-        const now = performance.now();
-    
-        for (const circle of circles) {
-          const elapsed = now - circle.startTime;
-          const progress = Math.min(elapsed / 500, 1); // Animate over 500ms
-          drawCircle(circle, progress);
-        }
-    
-        requestAnimationFrame(updateCanvas);
       }
-    
-      function drawCircle(circle, progress) {
-        const currentRadius = circle.radius * progress;
-    
-        ctx.beginPath();
-        ctx.arc(circle.x, circle.y, currentRadius, 0, Math.PI * 2);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-        ctx.closePath();
-      }
-    
-      startGame();
+    });
+  
+    function drawCircle(circle) {
+      ctx.beginPath();
+      ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+      ctx.fillStyle = 'red';
+      ctx.fill();
+      ctx.closePath();
     }
-)
+  
+    function redrawCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const circle of circles) {
+        drawCircle(circle);
+      }
+    }
+  
+    startButton.addEventListener('click', startGame);
+  });
+  
