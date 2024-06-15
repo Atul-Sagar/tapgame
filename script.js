@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     const clicksElement = document.getElementById('clicks');
     const startButton = document.getElementById('startButton');
+    const timerElement = document.getElementById('timer');
+    const infoElement = document.getElementById('info');
     let circles = [];
     let nextId = 0;
     let clicks = 0;
@@ -17,9 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
         clicks = 0;
         clicksElement.textContent = clicks;
         circles = [];
+        timerElement.textContent = '0';
+        infoElement.style.display = 'none';
         startButton.textContent = 'Test in progress...';
+        startTime = performance.now()
         setTimeout(finishTest, 10000); // Test duration: 10 seconds
         addCircle();
+        updateTimer();
       }
     }
   
@@ -27,10 +33,37 @@ document.addEventListener('DOMContentLoaded', () => {
       testFinished = true;
       startButton.disabled = false;
       startButton.textContent = 'Start Test';
+      infoElement.style.display = 'block';
       alert(`Test finished! Clicks: ${clicks}`);
       testStarted = false;
       testFinished = false;
     }
+
+    // function updateTimer() {
+    //     if (testStarted && !testFinished) {
+    //       const currentTime = performance.now();
+    //       const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+    //       timerElement.textContent = `Time: ${elapsedTime} sec`;;
+    //       requestAnimationFrame(updateTimer);
+    //     }
+    // }
+      
+
+    function updateTimer() {
+        if (testStarted && !testFinished) {
+          const currentTime = performance.now();
+          const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+          const remainingTime = Math.max(0, 10 - elapsedTime); // Change 10 to your desired test duration
+          timerElement.textContent = `Time: ${remainingTime} sec`;
+      
+          if (remainingTime === 0) {
+            finishTest();
+          } else {
+            requestAnimationFrame(updateTimer);
+          }
+        }
+    }
+
   
     function addCircle() {
       if (!testFinished) {
